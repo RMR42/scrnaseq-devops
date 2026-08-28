@@ -1,0 +1,11 @@
+name: scrnaseq-runtime
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python=3.10
+  - scanpy
+  - python-igraph
+  - leidenalg
