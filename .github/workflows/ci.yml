@@ -12,6 +12,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -31,3 +35,28 @@ jobs:
             --entrypoint /usr/local/bin/_entrypoint.sh \
             scrnaseq-analysis:ci \
             python -m pytest -v
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            docker login ghcr.io \
+            -u "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Tag Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker tag \
+            scrnaseq-analysis:ci \
+            ghcr.io/rmr42/scrnaseq-analysis:latest
+
+          docker tag \
+            scrnaseq-analysis:ci \
+            ghcr.io/rmr42/scrnaseq-analysis:${{ github.sha }}
+
+      - name: Push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/rmr42/scrnaseq-analysis:latest
+          docker push ghcr.io/rmr42/scrnaseq-analysis:${{ github.sha }}
