@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t scrnaseq-analysis:ci \
+            -f docker/Dockerfile \
+            .
+
+      - name: Run tests
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/workspace" \
+            -w /workspace \
+            --entrypoint pytest \
+            scrnaseq-analysis:ci \
+            -v
