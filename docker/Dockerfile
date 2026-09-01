@@ -11,4 +11,4 @@ RUN micromamba install -y -n base -f /tmp/environment.yml && \
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER analysis/ ./analysis/
 
-ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "python", "analysis/pipeline.py"]
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "python", "-m", "analysis.pipeline"]

@@ -12,7 +12,7 @@ def run_pca_and_neighbors(adata, n_comps=50, n_pcs=15, n_neighbors=10, max_value
 
     """
     sc.pp.scale(adata, max_value=max_value)
-    sc.tl.pca(adata, svd_solver='arpack')
+    sc.tl.pca(adata, n_comps=n_comps,svd_solver='arpack')
     sc.pp.neighbors(adata, n_neighbors=n_neighbors, n_pcs=n_pcs)
     return adata
 

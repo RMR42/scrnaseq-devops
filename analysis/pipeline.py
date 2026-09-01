@@ -11,10 +11,16 @@ import logging
 import scanpy as sc
 import os
 
-from qc import qc_and_filter
-from normalize import normalize, select_highly_variable_genes
-from clustering import run_pca_and_neighbors, cluster, rank_marker_genes, annotate_clusters,save_marker_genes,save_plots
-
+from .qc import qc_and_filter
+from .normalize import normalize, select_highly_variable_genes
+from .clustering import (
+    run_pca_and_neighbors,
+    cluster,
+    rank_marker_genes,
+    annotate_clusters,
+    save_marker_genes,
+    save_plots,
+)
 
 # Set up logging
 logging.basicConfig(
