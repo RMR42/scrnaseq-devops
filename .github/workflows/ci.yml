@@ -28,6 +28,6 @@ jobs:
           docker run --rm \
             -v "${{ github.workspace }}:/workspace" \
             -w /workspace \
-            --entrypoint pytest \
+            --entrypoint /usr/local/bin/_entrypoint.sh \
             scrnaseq-analysis:ci \
-            -v
+            python -m pytest -v
