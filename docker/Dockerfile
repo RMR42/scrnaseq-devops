@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:2.9.
+FROM mambaorg/micromamba:2.9.0
 
 LABEL org.opencontainers.image.source="https://github.com/RMR42/scrnaseq-devops"
 
