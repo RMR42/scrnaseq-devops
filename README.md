@@ -180,16 +180,24 @@ GitHub Actions
 
 ## Security Considerations
 
-The project uses several AWS security mechanisms:
+The AWS deployment follows several security best practices:
 
--   IAM instance profile instead of storing AWS access keys on the EC2
-    instance.
--   IMDSv2 with required tokens.
--   EC2 instance metadata tags enabled explicitly.
--   Security-group-controlled network access.
--   S3 and ECR permissions scoped through IAM policies.
--   No AWS credentials are embedded in the Docker image or user-data
-    script.
+- IAM instance profile: EC2 uses an IAM role with temporary AWS
+  credentials instead of storing long-lived access keys on the instance.
+- Scoped IAM permissions: The worker can read input objects from the
+  `input-data/` prefix, write results to the `results/` prefix, and pull
+  images from the project ECR repository.
+- IMDSv2: Instance metadata access requires IMDSv2 tokens.
+- Controlled metadata access: EC2 instance metadata tags are explicitly
+  enabled because the worker uses the `JobInputKey` tag for runtime job
+  assignment.
+- Restricted inbound access: The worker does not require inbound SSH
+  during normal operation. SSH is enabled only when explicitly configured
+  for debugging and restricted to a specified CIDR range.
+- No long-lived credentials in code: AWS credentials are not embedded in
+  the Docker image or user-data script.
+- Environment-specific configuration: Resource-specific values such as
+  the S3 bucket name are kept outside the committed Terraform source.
 
 ## Current Milestones
 
