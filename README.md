@@ -1,6 +1,6 @@
 # AWS Containerized scRNA-seq Analysis Pipeline
 
-A reproducible DevOps deployment project for running a containerized
+A DevOps deployment project for running a reproducible containerized
 single-cell RNA-seq analysis workflow on AWS. The project packages the
 analysis environment with Docker, stores inputs/results in Amazon S3,
 provisions infrastructure with Terraform, and uses an ephemeral EC2
