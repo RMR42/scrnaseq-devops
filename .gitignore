@@ -11,3 +11,30 @@ docker_results/
 
 # Local environment
 .env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+crash.log
+crash.*.log
+
+# AWS / credentials
+*.pem
+*.key
+.aws/
+
+# Local logs
+*.log
+
+# Environment files
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
