@@ -158,8 +158,9 @@ resources
 
 ## CI/CD
 
-The project uses GitHub Actions to build and publish the Docker image to
-Amazon ECR.
+GitHub Actions builds the Docker image on every push/PR, runs the test
+suite inside it, and — on pushes to `main` — publishes the image to the
+GitHub Container Registry (GHCR):
 
 ``` text
 GitHub repository
@@ -168,14 +169,36 @@ GitHub repository
 GitHub Actions
        |
        +-- Build Docker image
-       +-- Authenticate to ECR
-       +-- Push image
+       +-- Run tests inside the container
+       +-- Push image (on main)
               |
               v
-          Amazon ECR
-              |
-              v
-          EC2 worker
+   ghcr.io/rmr42/scrnaseq-analysis
+```
+
+The Terraform in `infra/` also provisions a project-specific **ECR**
+repository for the image the EC2 worker actually pulls from
+(`ecr_repository_url` in `outputs.tf`).
+
+The current CI/CD flow publishes the image to GHCR. The image must then
+be manually promoted/copied to the project ECR repository before an EC2
+worker can use it.
+
+```text
+GitHub
+   |
+   v
+GitHub Actions
+   |
+   v
+GHCR
+   |
+   | manual image promotion
+   v
+ECR
+   |
+   v
+EC2 worker
 ```
 
 ## Security Considerations
@@ -216,19 +239,30 @@ than receiving the value through a Terraform variable.
 ``` text
 .
 ├── analysis/
-│   └── pipeline.py
+│   ├── pipeline.py
+│   ├── qc.py
+│   ├── normalize.py
+│   └── clustering.py
 ├── docker/
+│   ├── Dockerfile
 │   └── environment.yml
 ├── infra/
+│   ├── main.tf
 │   ├── ec2.tf
 │   ├── iam.tf
-│   ├── s3.tf
 │   ├── ecr.tf
+│   ├── data.tf
+│   ├── monitoring.tf
 │   ├── variables.tf
+│   ├── outputs.tf
 │   └── user_data.sh.tpl
 ├── tests/
-│   └── data/
-├── Dockerfile
+│   ├── data/
+│   └── test_*.py
+├── .github/workflows/ci.yml
+├── create_test_data.py
+├── GETTING_STARTED.md
+├── LESSONS_LEARNT.md
 └── README.md
 ```
 

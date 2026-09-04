@@ -4,8 +4,7 @@
 
 This project provides two ways to run the scRNA-seq analysis pipeline:
 
-1. **Local / research use** — run the pipeline using Docker or a local
-   environment without needing AWS.
+1. **Local / research use** — run the pipeline using Docker without needing AWS.
 2. **AWS / DevOps deployment** — run the same containerized pipeline on
    ephemeral EC2 workers using Terraform, ECR, S3, IAM, and GitHub Actions.
 
@@ -14,18 +13,67 @@ an AWS account is not required to use the pipeline itself.
 
 ---
 
-## Getting Started
+### Run Locally with Docker
 
-### Option 1: Run Locally
+The recommended way to run the pipeline locally is with Docker. This keeps the Python, Scanpy, and other bioinformatics dependencies isolated from the user's host environment.
 
-The pipeline accepts an `.h5ad` AnnData file and produces a processed
-AnnData object along with analysis outputs.
+The pipeline accepts an `.h5ad` AnnData file and produces a processed AnnData object along with analysis outputs.
 
-Basic usage:
+#### 1. Build the Docker image
+
+From the repository root:
 
 ```bash
-python analysis/pipeline.py   --input path/to/raw.h5ad   --output path/to/result.h5ad
+docker build -f docker/Dockerfile -t scrnaseq-analysis .
 ```
+
+#### 2. Prepare an output directory
+
+```bash
+mkdir -p results
+```
+
+#### 3. Run the pipeline
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e MPLCONFIGDIR=/tmp/matplotlib \
+  -v "/path/to/input:/data:ro" \
+  -v "$(pwd)/results:/results" \
+  scrnaseq-analysis:latest \
+  --input /data/raw.h5ad \
+  --output /results/processed.h5ad \
+  --plot-dir /results/figures
+```
+
+Replace `/path/to/input` and `raw.h5ad` with the location and filename of your input `.h5ad` file.
+
+The `--user` option ensures that output files are owned by the local user rather than the container user. `MPLCONFIGDIR` provides Matplotlib with a writable cache directory inside the container.
+
+### Optional Biological Inputs
+
+The pipeline also supports optional files for cluster annotation and marker-gene visualization:
+
+```bash
+docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e MPLCONFIGDIR=/tmp/matplotlib \
+  -v "/path/to/input:/data:ro" \
+  -v "$(pwd)/results:/results" \
+  scrnaseq-analysis:latest \
+  --input /data/raw.h5ad \
+  --output /results/processed.h5ad \
+  --clusters /data/cluster_mapping.json \
+  --markers /data/marker_genes.json \
+  --plot-dir /results/figures
+```
+
+The `--clusters` file can provide a mapping between clusters and cell types, while `--markers` can provide marker genes used for visualization.
+
+The pipeline also generates its own `markers.csv` containing ranked marker genes for the identified clusters.
+
+### Analysis Steps
 
 The pipeline performs:
 
@@ -39,18 +87,6 @@ The pipeline performs:
 - Visualization
 - Saving of the processed `.h5ad` object
 
-The pipeline also supports optional input files for biological
-interpretation:
-
-```bash
-python analysis/pipeline.py   --input path/to/raw.h5ad   --output path/to/result.h5ad   --clusters path/to/cluster_mapping.json   --markers path/to/marker_genes.json   --plot-dir figures
-```
-
-The `--clusters` file can provide a mapping between clusters and cell types,
-while `--markers` can provide marker genes used for visualization. The
-pipeline also generates its own `markers.csv` containing ranked marker genes
-for the identified clusters.
-
 ### Main Outputs
 
 A typical run produces:
@@ -63,10 +99,7 @@ results/
     └── <plots>
 ```
 
-The processed `.h5ad` retains the analysis results for further exploration
-in tools such as Scanpy. The marker-gene table can be used to inspect genes
-associated with individual clusters, while the figures provide visual
-summaries of the analysis.
+The processed `.h5ad` retains the analysis results for further exploration in tools such as Scanpy. The marker-gene table can be used to inspect genes associated with individual clusters, while the figures provide visual summaries of the analysis.
 
 ---
 
@@ -121,8 +154,7 @@ docker tag scrnaseq-analysis:latest <account-id>.dkr.ecr.<aws-region>.amazonaws.
 docker push <account-id>.dkr.ecr.<aws-region>.amazonaws.com/scrnaseq-analysis:latest
 ```
 
-GitHub Actions can also build and publish the image automatically when
-changes are pushed.
+GitHub Actions automatically builds, tests, and publishes the image to GHCR. The image must currently be copied/promoted to the project ECR repository before it can be used by the EC2 worker.
 
 ### 3. Upload a sample and launch a worker
 
@@ -201,8 +233,7 @@ Ephemeral workers
 Dynamic job assignment
 ```
 
-This approach helped separate the scientific workflow from the infrastructure
-needed to run it at scale.
+This approach helped separate the scientific workflow from the infrastructure required for cloud-based and potentially parallel execution.
 
 The main lesson was that deployment is not simply about connecting AWS
 services. Small details such as file paths, permissions, container

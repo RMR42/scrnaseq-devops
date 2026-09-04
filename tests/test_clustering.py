@@ -1,10 +1,10 @@
-import numpy as np
 import anndata as ad
+import numpy as np
 
 from analysis.clustering import (
-    run_pca_and_neighbors,
-    cluster,
     annotate_clusters,
+    cluster,
+    run_pca_and_neighbors,
 )
 
 
@@ -14,22 +14,13 @@ def create_test_adata(n_cells=20, n_genes=10):
     """
     rng = np.random.default_rng(42)
 
-    X = rng.poisson(
-        lam=5,
-        size=(n_cells, n_genes)
-    ).astype(float)
+    X = rng.poisson(lam=5, size=(n_cells, n_genes)).astype(float)
 
     adata = ad.AnnData(X=X)
 
-    adata.var_names = [
-        f"Gene{i}"
-        for i in range(n_genes)
-    ]
+    adata.var_names = [f"Gene{i}" for i in range(n_genes)]
 
-    adata.obs_names = [
-        f"Cell{i}"
-        for i in range(n_cells)
-    ]
+    adata.obs_names = [f"Cell{i}" for i in range(n_cells)]
 
     return adata
 
@@ -84,10 +75,26 @@ def test_annotate_clusters():
     adata = create_test_adata()
 
     adata.obs["leiden"] = [
-        "0", "0", "0", "1", "1",
-        "1", "0", "1", "0", "1",
-        "0", "0", "1", "1", "0",
-        "1", "0", "1", "0", "1",
+        "0",
+        "0",
+        "0",
+        "1",
+        "1",
+        "1",
+        "0",
+        "1",
+        "0",
+        "1",
+        "0",
+        "0",
+        "1",
+        "1",
+        "0",
+        "1",
+        "0",
+        "1",
+        "0",
+        "1",
     ]
 
     cluster_to_celltype = {
@@ -103,8 +110,24 @@ def test_annotate_clusters():
     assert "cell_type" in result.obs
 
     assert result.obs["cell_type"].tolist() == [
-        "T_cell", "T_cell", "T_cell", "B_cell", "B_cell",
-        "B_cell", "T_cell", "B_cell", "T_cell", "B_cell",
-        "T_cell", "T_cell", "B_cell", "B_cell", "T_cell",
-        "B_cell", "T_cell", "B_cell", "T_cell", "B_cell",
+        "T_cell",
+        "T_cell",
+        "T_cell",
+        "B_cell",
+        "B_cell",
+        "B_cell",
+        "T_cell",
+        "B_cell",
+        "T_cell",
+        "B_cell",
+        "T_cell",
+        "T_cell",
+        "B_cell",
+        "B_cell",
+        "T_cell",
+        "B_cell",
+        "T_cell",
+        "B_cell",
+        "T_cell",
+        "B_cell",
     ]

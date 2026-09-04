@@ -8,30 +8,32 @@ Usage:
 import argparse
 import json
 import logging
-import scanpy as sc
 import os
 
-from .qc import qc_and_filter
-from .normalize import normalize, select_highly_variable_genes
+import scanpy as sc
+
 from .clustering import (
-    run_pca_and_neighbors,
+    annotate_clusters,
     cluster,
     rank_marker_genes,
-    annotate_clusters,
+    run_pca_and_neighbors,
     save_marker_genes,
     save_plots,
 )
+from .normalize import normalize, select_highly_variable_genes
+from .qc import qc_and_filter
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
 
 
-def run_pipeline(input_path, output_path, cluster_file=None,marker_file=None,plot_dir="figures"):
+def run_pipeline(
+    input_path, output_path, cluster_file=None, marker_file=None, plot_dir="figures"
+):
 
     # Load the data
     logger.info(f"Loading data from: {input_path}")
@@ -40,10 +42,8 @@ def run_pipeline(input_path, output_path, cluster_file=None,marker_file=None,plo
 
     # QC
     logger.info("Starting quality control")
-    adata = qc_and_filter(adata,min_genes=200,min_cells=3,max_pct_mt=5.0)
-    logger.info(
-        f"QC complete: {adata.n_obs} cells, {adata.n_vars} genes"
-    )
+    adata = qc_and_filter(adata, min_genes=200, min_cells=3, max_pct_mt=5.0)
+    logger.info(f"QC complete: {adata.n_obs} cells, {adata.n_vars} genes")
 
     # Normalize
     logger.info("Starting normalization")
@@ -52,27 +52,24 @@ def run_pipeline(input_path, output_path, cluster_file=None,marker_file=None,plo
 
     # Select HVGs
     logger.info("Selecting highly variable genes")
-    adata = select_highly_variable_genes(adata,n_top_genes=2000)
-    logger.info(
-        f"HVG selection complete: {adata.n_vars} genes retained"
-    )
+    adata = select_highly_variable_genes(adata, n_top_genes=2000)
+    logger.info(f"HVG selection complete: {adata.n_vars} genes retained")
 
     # PCA + neighbors
     logger.info("Running PCA and computing neighbors")
-    adata = run_pca_and_neighbors(adata,n_pcs=15,n_neighbors=10)
+    adata = run_pca_and_neighbors(adata, n_pcs=15, n_neighbors=10)
     logger.info("PCA and neighbor graph complete")
 
     # Cluster
     logger.info("Clustering cells")
     adata = cluster(adata, resolution=0.8)
     logger.info(
-        f"Clustering complete: "
-        f"{adata.obs['leiden'].nunique()} clusters found"
+        f"Clustering complete: " f"{adata.obs['leiden'].nunique()} clusters found"
     )
 
     # Rank marker genes
     logger.info("Ranking marker genes")
-    adata = rank_marker_genes(adata,groupby="leiden",method="wilcoxon")
+    adata = rank_marker_genes(adata, groupby="leiden", method="wilcoxon")
     logger.info("Marker gene ranking complete")
 
     logger.info("Saving marker genes")
@@ -96,9 +93,7 @@ def run_pipeline(input_path, output_path, cluster_file=None,marker_file=None,plo
 
     if marker_file:
 
-        logger.info(
-            f"Loading marker genes from: {marker_file}"
-        )
+        logger.info(f"Loading marker genes from: {marker_file}")
 
         with open(marker_file, "r") as f:
             marker_genes = json.load(f)
@@ -106,31 +101,42 @@ def run_pipeline(input_path, output_path, cluster_file=None,marker_file=None,plo
     # Optional annotation
     if cluster_to_celltype:
         logger.info("Annotating clusters")
-        adata = annotate_clusters(adata,cluster_to_celltype,cluster_key="leiden")
+        adata = annotate_clusters(adata, cluster_to_celltype, cluster_key="leiden")
         logger.info("Cluster annotation complete")
     else:
         logger.info("No cluster annotation mapping provided; skipping annotation")
 
     logger.info("Saving plots")
 
-    save_plots(adata,plot_dir,marker_genes)
+    save_plots(adata, plot_dir, marker_genes)
 
-    logger.info(
-        f"Plots saved to: {plot_dir}"
-    )
+    logger.info(f"Plots saved to: {plot_dir}")
 
     # Save
     logger.info(f"Saving final AnnData object to: {output_path}")
     adata.write(output_path)
     logger.info("Pipeline completed successfully")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the full scRNA-seq analysis pipeline")
+    parser = argparse.ArgumentParser(
+        description="Run the full scRNA-seq analysis pipeline"
+    )
     parser.add_argument("--input", required=True, help="Path to raw .h5ad file")
-    parser.add_argument("--output", required=True, help="Path to save the processed .h5ad")
-    parser.add_argument("--clusters",required=False,help="JSON file containing cluster-to-cell-type mapping")
-    parser.add_argument("--markers",required=False,help="JSON file containing marker genes for dot plot")
-    parser.add_argument("--plot-dir",default="figures",help="Directory to save plots")
+    parser.add_argument(
+        "--output", required=True, help="Path to save the processed .h5ad"
+    )
+    parser.add_argument(
+        "--clusters",
+        required=False,
+        help="JSON file containing cluster-to-cell-type mapping",
+    )
+    parser.add_argument(
+        "--markers",
+        required=False,
+        help="JSON file containing marker genes for dot plot",
+    )
+    parser.add_argument("--plot-dir", default="figures", help="Directory to save plots")
     args = parser.parse_args()
 
     run_pipeline(args.input, args.output, args.clusters, args.markers, args.plot_dir)

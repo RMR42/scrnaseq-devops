@@ -1,5 +1,5 @@
-import numpy as np
 import anndata as ad
+import numpy as np
 
 from analysis.qc import (
     check_mitochondrial_genes,
@@ -8,10 +8,12 @@ from analysis.qc import (
 
 
 def test_check_mitochondrial_genes():
-    X = np.array([
-        [10, 20, 30],
-        [5,  10, 15],
-    ])
+    X = np.array(
+        [
+            [10, 20, 30],
+            [5, 10, 15],
+        ]
+    )
 
     adata = ad.AnnData(X=X)
     adata.var_names = ["MT-ND1", "GeneA", "MT-CO1"]
@@ -24,13 +26,15 @@ def test_check_mitochondrial_genes():
 
 
 def test_qc_and_filter():
-    X = np.array([
-        # MT-Gene, GeneA, GeneB, GeneC, GeneD
-        [10, 10, 10, 10, 0],  # Cell 1: good
-        [1,   0,  0,  0,  0], # Cell 2: too few genes
-        [50,  1,  1,  1,  1], # Cell 3: high mitochondrial %
-        [10, 10, 10, 10, 0],  # Cell 4: good
-    ])
+    X = np.array(
+        [
+            # MT-Gene, GeneA, GeneB, GeneC, GeneD
+            [10, 10, 10, 10, 0],  # Cell 1: good
+            [1, 0, 0, 0, 0],  # Cell 2: too few genes
+            [50, 1, 1, 1, 1],  # Cell 3: high mitochondrial %
+            [10, 10, 10, 10, 0],  # Cell 4: good
+        ]
+    )
     adata = ad.AnnData(X=X)
 
     adata.obs_names = [

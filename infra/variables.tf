@@ -5,9 +5,8 @@ variable "aws_region" {
 }
 
 variable "bucket_name" {
-  description = "Globally unique S3 bucket name used for both input data and pipeline results"
+  description = "Globally unique S3 bucket name used for both input data and pipeline results. No default on purpose — set it in a local terraform.tfvars (gitignored)."
   type        = string
-  default = string
 }
 
 variable "input_prefix" {
@@ -59,9 +58,9 @@ variable "key_name" {
 }
 
 variable "ssh_allowed_cidr" {
-  description = "CIDR allowed to SSH into the instance, only used if key_name is set"
+  description = "CIDR allowed to SSH into the instance. Only used if key_name is set. No default on purpose — if key_name is set but this is left blank, no SSH ingress rule is created at all, so you can't accidentally open port 22 to 0.0.0.0/0."
   type        = string
-  default     = "0.0.0.0/0"
+  default     = ""
 }
 
 variable "budget_alert_email" {

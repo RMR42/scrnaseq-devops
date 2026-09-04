@@ -12,10 +12,9 @@ def run_pca_and_neighbors(adata, n_comps=50, n_pcs=15, n_neighbors=10, max_value
 
     """
     sc.pp.scale(adata, max_value=max_value)
-    sc.tl.pca(adata, n_comps=n_comps,svd_solver='arpack')
+    sc.tl.pca(adata, n_comps=n_comps, svd_solver="arpack")
     sc.pp.neighbors(adata, n_neighbors=n_neighbors, n_pcs=n_pcs)
     return adata
-
 
 
 def cluster(adata, resolution=0.8):
@@ -34,7 +33,7 @@ def annotate_clusters(adata, cluster_to_celltype, cluster_key="leiden"):
     Map numeric cluster labels to real cell-type names.
 
     """
-    adata.obs['cell_type']=adata.obs[cluster_key].map(cluster_to_celltype)
+    adata.obs["cell_type"] = adata.obs[cluster_key].map(cluster_to_celltype)
     return adata
 
 
@@ -45,6 +44,7 @@ def rank_marker_genes(adata, groupby="leiden", method="wilcoxon"):
     """
     sc.tl.rank_genes_groups(adata, groupby=groupby, method=method)
     return adata
+
 
 def save_marker_genes(adata, output_path, n_genes=20):
     """
@@ -61,14 +61,17 @@ def save_marker_genes(adata, output_path, n_genes=20):
 
     for cluster in clusters:
         for rank in range(n_genes):
-            rows.append({
-                "cluster": cluster,
-                "rank": rank + 1,
-                "gene": result["names"][cluster][rank]
-            })
+            rows.append(
+                {
+                    "cluster": cluster,
+                    "rank": rank + 1,
+                    "gene": result["names"][cluster][rank],
+                }
+            )
 
     markers = pd.DataFrame(rows)
     markers.to_csv(output_path, index=False)
+
 
 def save_plots(adata, output_dir, marker_genes=None):
     """
@@ -79,6 +82,7 @@ def save_plots(adata, output_dir, marker_genes=None):
     """
 
     import os
+
     import matplotlib.pyplot as plt
     import scanpy as sc
 
@@ -87,16 +91,9 @@ def save_plots(adata, output_dir, marker_genes=None):
     # -------------------------
     # UMAP
     # -------------------------
-    sc.pl.umap(
-        adata,
-        color="leiden",
-        show=False
-    )
+    sc.pl.umap(adata, color="leiden", show=False)
 
-    plt.savefig(
-        os.path.join(output_dir, "umap.png"),
-        bbox_inches="tight"
-    )
+    plt.savefig(os.path.join(output_dir, "umap.png"), bbox_inches="tight")
 
     plt.close()
 
@@ -144,16 +141,8 @@ def save_plots(adata, output_dir, marker_genes=None):
             print("Error: No marker genes are available for dot plot.")
             return
 
-        sc.pl.dotplot(
-            adata,
-            var_names=genes_to_plot,
-            groupby="leiden",
-            show=False
-        )
+        sc.pl.dotplot(adata, var_names=genes_to_plot, groupby="leiden", show=False)
 
-        plt.savefig(
-            os.path.join(output_dir, "dotplot.png"),
-            bbox_inches="tight"
-        )
+        plt.savefig(os.path.join(output_dir, "dotplot.png"), bbox_inches="tight")
 
         plt.close()

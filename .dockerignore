@@ -9,7 +9,6 @@ notebooks/
 tests/
 
 infra/
-nextflow/
 
 __pycache__/
 *.pyc
