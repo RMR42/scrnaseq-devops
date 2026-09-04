@@ -13,7 +13,7 @@ BUCKET="${bucket_name}"
 RESULTS_PREFIX="${results_prefix}"
 TIMESTAMP="$(date -u +%Y%m%d-%H%M%S)"
 
-# M6: the specific input file is supplied at EC2 launch time
+# the specific input file is supplied at EC2 launch time
 # through the instance tag "JobInputKey".
 IMDS_TOKEN="$(curl -sS -X PUT \
   "http://169.254.169.254/latest/api/token" \
@@ -28,19 +28,10 @@ if [ -z "$JOB_INPUT_KEY" ]; then
   exit 1
 fi
 
-# Milestone 5: one worker = one job = one sample. SAMPLE_NAME is derived
-# immediately, before anything that could fail, so on_exit can always find
-# the right place to report to -- even if the failure happens during Docker
-# install, before the pipeline itself ever runs.
 SAMPLE_NAME="$(basename "$JOB_INPUT_KEY" .h5ad)"
 echo "This worker's job: $JOB_INPUT_KEY (sample: $SAMPLE_NAME)"
 
-# Runs no matter how the script ends -- clean finish OR an early failure
-# from `set -e`. Think of it like a Python try/finally: this always fires.
-# Two separate artifacts land in S3 for this sample, always:
-#   - run.log     the full log of this worker's attempt
-#   - status.txt  a one-line SUCCESS / FAILED verdict, machine-readable
-# so failures are identifiable per sample without opening a single log.
+
 on_exit() {
   local exit_code=$?
   set +e
@@ -78,9 +69,6 @@ if ! command -v aws >/dev/null 2>&1; then
 fi
 
 mkdir -p /opt/scrnaseq/data /opt/scrnaseq/results
-# The container runs as a non-root user (mambauser), but this directory was
-# just created by root. Same bind-mount UID mismatch documented from local
-# testing -- open it up so the container's user can actually write into it.
 chmod -R 777 /opt/scrnaseq/data /opt/scrnaseq/results
 
 # --- Pull the analysis image from ECR ---
@@ -97,8 +85,6 @@ mkdir -p "$SAMPLE_OUT_DIR"
 chmod 777 "$SAMPLE_OUT_DIR"
 
 # --- Run the pipeline in the container ---
-# --output must be a FILE path, not a directory: pipeline.py derives
-# markers.csv's location via os.path.dirname(output_path).
 docker run --rm \
   -v /opt/scrnaseq/data:/data \
   -v /opt/scrnaseq/results:/results \
@@ -108,8 +94,6 @@ docker run --rm \
   --plot-dir "/results/$TIMESTAMP/$SAMPLE_NAME/figures"
 
 # --- Push this sample's results back to S3 ---
-# Layout: results/<sample_name>/{processed.h5ad, figures/, run.log, status.txt}
-# run.log and status.txt are added by on_exit, above, once this finishes.
 aws s3 cp \
   "$SAMPLE_OUT_DIR" \
   "s3://$BUCKET/$${RESULTS_PREFIX}$${TIMESTAMP}/$${SAMPLE_NAME}/" \

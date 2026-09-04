@@ -1,6 +1,3 @@
-# Optional: let Terraform upload the test fixture itself. Off by default —
-# turn on with -var="upload_test_data=true" once input_data_local_path is
-# correct for your machine, or just `aws s3 cp` it yourself beforehand.
 resource "aws_s3_object" "input_data" {
   count  = var.upload_test_data ? 1 : 0
   bucket = aws_s3_bucket.results.id
@@ -46,9 +43,7 @@ resource "aws_instance" "scrnaseq_worker" {
   vpc_security_group_ids = [aws_security_group.scrnaseq_worker.id]
   key_name               = var.key_name != "" ? var.key_name : null
 
-  # The instance is meant for a single run: the user-data script calls
-  # `shutdown -h now` when it's done, and this setting turns that shutdown
-  # into a full terminate instead of a stop — so nothing keeps billing.
+
   instance_initiated_shutdown_behavior = "terminate"
 
   user_data = templatefile("${path.module}/user_data.sh.tpl", {
@@ -60,14 +55,9 @@ resource "aws_instance" "scrnaseq_worker" {
     results_prefix = var.results_prefix
   })
 
-  # Every apply should reprovision (new image tag, new data, rerun, etc.),
-  # so tie the instance to whatever user_data currently renders to.
   user_data_replace_on_change = true
 
-  # Explicit and small on purpose — the default AMI root volume can be
-  # larger than you'd expect, and unattached/oversized EBS volumes are one
-  # of the most common sources of surprise AWS charges. 8 GB is plenty for
-  # the OS + Docker + a small test fixture.
+
   root_block_device {
     volume_type           = "gp3"
     volume_size           = 8
@@ -82,12 +72,6 @@ resource "aws_instance" "scrnaseq_worker" {
   depends_on = [aws_iam_role_policy.scrnaseq_s3_access, aws_iam_role_policy.scrnaseq_ecr_pull]
 }
 
-# -------------------------------------------------------------------
-# M6: Launch Template for one-sample analysis workers
-#
-# Terraform creates this blueprint once.
-# Lambda will later use it to launch one EC2 worker per .h5ad job.
-# -------------------------------------------------------------------
 
 resource "aws_launch_template" "scrnaseq_worker" {
   name_prefix = "scrnaseq-worker-"
@@ -105,8 +89,6 @@ resource "aws_launch_template" "scrnaseq_worker" {
 
   key_name = var.key_name != "" ? var.key_name : null
 
-  # The worker shuts itself down when the job finishes.
-  # Lambda-launched workers should terminate rather than remain stopped.
   instance_initiated_shutdown_behavior = "terminate"
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
@@ -117,8 +99,6 @@ resource "aws_launch_template" "scrnaseq_worker" {
     input_prefix   = var.input_prefix
     results_prefix = var.results_prefix
 
-    # M6 no longer supplies job_input_key through Terraform.
-    # user_data obtains JobInputKey from the EC2 instance tag.
   }))
 
   metadata_options {

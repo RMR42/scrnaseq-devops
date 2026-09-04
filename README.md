@@ -199,21 +199,6 @@ The AWS deployment follows several security best practices:
 - Environment-specific configuration: Resource-specific values such as
   the S3 bucket name are kept outside the committed Terraform source.
 
-## Current Milestones
-
--   [x] Containerize the Scanpy analysis environment
--   [x] Build and publish the Docker image to Amazon ECR
--   [x] Provision AWS infrastructure using Terraform
--   [x] Store pipeline inputs and results in Amazon S3
--   [x] Run the analysis on an ephemeral EC2 worker
--   [x] Process one `.h5ad` file as one independent job
--   [x] Create a reusable EC2 Launch Template
--   [x] Assign a job through the `JobInputKey` EC2 tag
--   [x] Retrieve the job assignment through IMDSv2
--   [x] Verify successful execution using the Launch Template
--   [ ] Add Lambda-based automatic job launching from S3 events
--   [ ] Add scalable parallel job execution
-
 ## Example Manual Test
 
 The Launch Template can be tested by assigning a specific S3 object key

@@ -7,7 +7,6 @@ variable "aws_region" {
 variable "bucket_name" {
   description = "Globally unique S3 bucket name used for both input data and pipeline results"
   type        = string
-  # CHANGE THIS to something unique, e.g. "ranjana-scrnaseq-results-2026"
   default = string
 }
 
