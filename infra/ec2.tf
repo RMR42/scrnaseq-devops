@@ -6,8 +6,6 @@ resource "aws_s3_object" "input_data" {
   etag   = filemd5(var.input_data_local_path)
 }
 
-# No inbound access needed for a batch job that runs once and shuts itself
-# down. SSH is opened only if you pass a key_name, for debugging.
 resource "aws_security_group" "scrnaseq_worker" {
   name        = "scrnaseq-worker-sg"
   description = "Security group for the scRNA-seq pipeline worker instance"
