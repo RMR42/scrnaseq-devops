@@ -76,7 +76,7 @@ aws ecr get-login-password --region "$REGION" \
   | docker login --username AWS --password-stdin "$ECR_REPO_URL"
 docker pull "$ECR_REPO_URL:$IMAGE_TAG"
 
-# --- Fetch exactly the one sample this worker was assigned, nothing else ---
+# --- Fetch only one sample this worker was assigned  ---
 LOCAL_INPUT_FILE="/opt/scrnaseq/data/$(basename "$JOB_INPUT_KEY")"
 aws s3 cp "s3://$BUCKET/$JOB_INPUT_KEY" "$LOCAL_INPUT_FILE"
 
